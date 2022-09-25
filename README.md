@@ -6,6 +6,6 @@ Implement data structures and algorithms in CSD301:
 + Show
 + Save PDF
 
-Notes
+Notes:
 + Value insert must be not in tree
 + Value delete must be in tree
