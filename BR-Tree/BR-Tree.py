@@ -349,7 +349,9 @@ class BRTree:
     # Rotate left a node
     '''
     P                       X
+      +                   +    +                      
         X       ->      P       R
+      +    +              +  
     L       R               L
     '''
     def __rotateLeft(self, node):
@@ -367,7 +369,9 @@ class BRTree:
     # Rotate right a node
     '''
             P               X
+          +               +   +                      
         X       ->      L       P
+      +   +                   +  
     L       R               R
     '''
     def __rotateRight(self, node):
