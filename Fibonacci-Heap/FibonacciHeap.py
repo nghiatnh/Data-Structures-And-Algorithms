@@ -24,41 +24,6 @@ class HeapTreeNode:
         return str(self.value)
 
 
-class HeapTreeRoot:
-    '''
-    Heap Tree Root
-    ----
-        Feature of Heap Tree Root:
-        + Contains a node link to its children
-        + Link to left and right root
-        + Union 2 root easily
-    '''
-    def __init__(self, value: int = None) -> None:
-        self.root: HeapTreeNode = None if value is None else HeapTreeNode(
-            value=value)
-        self.right: HeapTreeRoot = None
-        self.left: HeapTreeRoot = None
-
-    def __str__(self) -> str:
-        if self.is_empty():
-            return 'Empty Heap!'
-        return "Fibonacci Heap: " + str(self.root.value)
-
-    def is_empty(self) -> bool:
-        '''
-        Return True if root is None
-        '''
-        return self.root is None
-
-    def union(self, root: HeapTreeNode) -> None:
-        '''
-        Add a root to children of this root
-        '''
-        if not self.is_empty():
-            self.root.children.append(root)
-            root.parent = self.root
-
-
 class FibonacciHeap:
     '''
     Fibonacci Heap
@@ -72,7 +37,8 @@ class FibonacciHeap:
         + Difficultly searching
     '''
     def __init__(self) -> None:
-        self.min: HeapTreeRoot = None
+        self.min : HeapTreeNode = None
+        self.roots : List[HeapTreeNode] = []
 
     def __str__(self) -> str:
         return str(self.min)
@@ -85,25 +51,22 @@ class FibonacciHeap:
             print('Empty Heap!')
             return
         dot = Graph()
-        curRoot = self.min
-        flag = 'right'
 
         # Min -> red color
         # Marked -> black color
         # Other -> green color
         # Links from roots -> red color
         # Links from parent to children -> black color
-        while curRoot:
+        lastRoot = None
+        for curRoot in self.roots:
             # Create root nodes
-            dot.node(str(curRoot.root.value),str(curRoot.root.value), color='red' if curRoot is self.min else 'green')
+            dot.node(str(curRoot.value),str(curRoot.value), color='red' if curRoot is self.min else 'green')
 
             # Create edge from left root to right root
-            if curRoot.left and curRoot != self.min and flag == 'right':
-                dot.edge(str(curRoot.left.root.value), str(curRoot.root.value), constraint='false', color='red')
-            elif curRoot.right and flag == 'left':
-                dot.edge(str(curRoot.root.value), str(curRoot.right.root.value), constraint='false', color='red')
+            if lastRoot:
+                dot.edge(str(lastRoot.value), str(curRoot.value), constraint='false', color='red')
 
-            waitNodes = curRoot.root.children.copy()
+            waitNodes = curRoot.children.copy()
             while len(waitNodes) > 0:
                 curNode = waitNodes.pop(0)
                 # Create nodes
@@ -113,42 +76,34 @@ class FibonacciHeap:
                     dot.edge(str(curNode.parent.value), str(curNode.value))
                 waitNodes += curNode.children.copy()
 
-            curRoot = curRoot.right if flag == 'right' else curRoot.left
-            
-            # Change traverse direction 
-            if not curRoot and flag == 'right':
-                flag = 'left'
-                curRoot = self.min.left
+            lastRoot = curRoot
 
         # Save and render image
         if fileName is None:
-            fileName = 'fibonacci-heap.gv'
+            fileName = './fibonacci-heap.gv'
         dot.save(fileName)
         dot.render(fileName, view=True)
 
     def is_empty(self) -> bool:
         '''
-        Return True if min is None
+        Return True if min is None or roots list is empty
         '''
-        return self.min is None
+        return self.min is None or len(self.roots) == 0
 
     def search(self, value : int) -> HeapTreeNode:
         '''
         Search a node with value equal given value
         '''
-        if self.is_empty() or value < self.min.root.value:
+        if self.is_empty() or value < self.min.value:
             return None
-        
-        curRoot = self.min
-        flag = 'right'
 
         # If value < value of node -> do not traverse the node children
         # Traverse all root
-        while curRoot:
-            if value == curRoot.root.value:
-                return curRoot.root
-            elif value > curRoot.root.value:
-                waitNodes = curRoot.root.children.copy()
+        for curRoot in self.roots:
+            if value == curRoot.value:
+                return curRoot
+            elif value > curRoot.value:
+                waitNodes = curRoot.children.copy()
                 while len(waitNodes) > 0:
                     curNode = waitNodes.pop()
                     if curNode.value == value:
@@ -156,63 +111,38 @@ class FibonacciHeap:
                     elif value > curNode.value:
                         waitNodes = curNode.children.copy() + waitNodes
 
-            curRoot = curRoot.right if flag == 'right' else curRoot.left
-
-            # Change traverse direction
-            if not curRoot and flag == 'right':
-                flag = 'left'
-                curRoot = self.min.left
-        
         return None
 
     def insert(self, value: int) -> None:
         '''
-        Insert new node to the right of min node and update min
+        Insert new node to roots list and update min
         '''
+        newNode : HeapTreeNode = HeapTreeNode(value=value)
+
+        self.roots.append(newNode)
+
         if self.is_empty():
-            self.min = HeapTreeRoot(value=value)
+            self.min = newNode
         else:
-            newNode = HeapTreeRoot(value=value)
-
-            # Update min
-            # If new node is min then min -> new node
-            # Else new node is right node of min
-            newNode.left = self.min
-            newNode.right = self.min.right
-
-            if self.min.right:
-                self.min.right.left = newNode
-            self.min.right = newNode
-
-            if newNode.root.value < self.min.root.value:
+            if newNode.value < self.min.value:
                 self.min = newNode
 
-    def insert_root(self, node: HeapTreeNode) -> HeapTreeRoot:
+    def insert_root(self, node: HeapTreeNode) -> HeapTreeNode:
         '''
-        Insert new root to heap
+        Insert new root to heap and update min
         '''
         node.parent = None
         node.isMarked = False
-        root = HeapTreeRoot()
-        root.root = node
+
+        self.roots.append(node)
+        
         if self.is_empty():
-            self.min = root
+            self.min = node
         else:
-            newNode = root
-
-            # Update min
-            # If new node is min then min -> new node
-            # Else new node is right node of min
-            newNode.right = self.min
-            newNode.left = self.min.left
-
-            if self.min.left:
-                self.min.left.right = newNode
-            self.min.left = newNode
-
-            if newNode.root.value < self.min.root.value:
-                self.min = newNode
-        return root
+            if node.value < self.min.value:
+                self.min = node
+            
+        return node
 
     def insert_multiple(self, values: List[int]) -> None:
         '''
@@ -225,14 +155,12 @@ class FibonacciHeap:
         '''
         Delete min node in the heap, then consolidate it
         '''
-        childrenOfMin = self.min.root.children
+        if self.is_empty():
+            return
 
-        # Delete min, relink its left and right
-        if self.min.right:
-            self.min.right.left = self.min.left
-        if self.min.left:
-            self.min.left.right = self.min.right
-        self.min = self.min.right if self.min.right else self.min.left
+        childrenOfMin = self.min.children
+
+        self.roots.remove(self.min)
 
         # Put all children of min to root
         for node in childrenOfMin:
@@ -249,7 +177,7 @@ class FibonacciHeap:
         
         if value < node.parent.value:
             node.value = value
-            self.reconstruct(node)
+            self.__reconstruct(node)
         else:
             node.value = value
 
@@ -260,7 +188,17 @@ class FibonacciHeap:
         self.decrease_key(node, -inf)
         self.delete_min()
 
-    def reconstruct(self, node : HeapTreeNode) -> None:
+    def union(self, heap) -> None:
+        '''
+        Union other heap to this heap
+        '''
+        heap : FibonacciHeap = heap
+
+        self.roots += heap.roots
+        if heap.min.value < self.min.value:
+            self.min = self.roots[self.roots.index(heap.min)]
+
+    def __reconstruct(self, node : HeapTreeNode) -> None:
         '''
         Reconstruct heap after decrease key
         '''
@@ -271,32 +209,11 @@ class FibonacciHeap:
         children = node
         parent.children.remove(node)
         root = self.insert_root(children)
-        root.root.isMarked = False
+        root.isMarked = False
         if parent.isMarked:
-            self.reconstruct(parent)
+            self.__reconstruct(parent)
         else:
             parent.isMarked = parent.parent != None
-
-    def __union_root(self, sameRankRoot : HeapTreeRoot, curRoot : HeapTreeRoot) -> HeapTreeRoot:
-        '''
-        Union 2 root, put the larger root to children of smaller, then update links to delete larger root
-        '''
-        if sameRankRoot.root.value < curRoot.root.value:
-            sameRankRoot.union(curRoot.root)
-            if curRoot.left:
-                curRoot.left.right = curRoot.right
-            if curRoot.right:
-                curRoot.right.left = curRoot.left
-
-            return sameRankRoot
-        else:
-            curRoot.union(sameRankRoot.root)
-            if sameRankRoot.left:
-                sameRankRoot.left.right = sameRankRoot.right
-            if sameRankRoot.right:
-                sameRankRoot.right.left = sameRankRoot.left
-
-            return curRoot
 
     def __consolidate(self) -> None:
         '''
@@ -305,44 +222,59 @@ class FibonacciHeap:
         if self.is_empty():
             return
 
-        curRoot = self.min
-        min = self.min
+        i = 0
+        min : HeapTreeNode = self.roots[0]
         ranks = {}
-        
-        # Set current root to left most root
-        while curRoot.left:
-            curRoot = curRoot.left
 
-        while curRoot:
+        while i < len(self.roots):
+            curRoot = self.roots[i]
+
             # Check min node while consolidate
-            if curRoot.root.value < min.root.value:
+            if curRoot.value < min.value:
                 min = curRoot
 
             # Search the same rank before
-            rank = len(curRoot.root.children)
-            sameRankRoot = ranks.get(rank, None)
+            rank = len(curRoot.children)
+            sameRankRoot : HeapTreeNode = ranks.get(rank, None)
 
             # If 2 root same rank -> union them
             # Else, put the current node rank to dictionary
-            if sameRankRoot:
+            if sameRankRoot and sameRankRoot != curRoot:
                 ranks.pop(rank)
-                nextRoot = self.__union_root(sameRankRoot, curRoot)
+                '''
+                Union 2 root, put the larger root to children of smaller, then update links to delete larger root
+                '''
+
+                if sameRankRoot.value < curRoot.value:
+                    sameRankRoot.children.append(curRoot)
+                    curRoot.parent = sameRankRoot
+                    self.roots.remove(curRoot)
+                    i = self.roots.index(sameRankRoot)
+                else:
+                    curRoot.children.append(sameRankRoot)
+                    sameRankRoot.parent = curRoot
+                    self.roots.remove(sameRankRoot)
+                    i = self.roots.index(curRoot)
+
             else:
                 ranks[rank] = curRoot
-                nextRoot = curRoot.right
-            curRoot = nextRoot
-
+                i += 1
         # Update min 
         self.min = min
 
 
 FH = FibonacciHeap()
-FH.insert_multiple([3 * x for x in range(10)])
+FH.insert_multiple([3 * x for x in range(20)])
 print(FH)
 FH.delete_min()
 FH.delete_min()
-node = FH.search(24)
 FH.show()
-FH.delete(node)
-FH.show()
+print(FH)
+
+FH1 = FibonacciHeap()
+FH1.insert_multiple([3 * x+1 for x in range(20)])
+print(FH1)
+FH1.delete_min()
+FH1.union(FH)
+FH1.show()
 print(FH)
