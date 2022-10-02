@@ -41,7 +41,7 @@ class FibonacciHeap:
         self.roots : List[HeapTreeNode] = []
 
     def __str__(self) -> str:
-        return str(self.min)
+        return "Fibonacci Heap: " + str(self.min)
 
     def show(self, fileName : str = None) -> None:
         '''
@@ -262,19 +262,29 @@ class FibonacciHeap:
         # Update min 
         self.min = min
 
-
+import time
 FH = FibonacciHeap()
-FH.insert_multiple([3 * x for x in range(20)])
-print(FH)
+time1 = time.time()
+FH.insert_multiple([3 * x for x in range(200000)])
+time2 = time.time()
+print("insert: ", time2 - time1)
+time1 = time.time()
 FH.delete_min()
+time2 = time.time()
+print("delete min: ", time2 - time1)
+time1 = time.time()
 FH.delete_min()
-FH.show()
-print(FH)
+time2 = time.time()
+print("delete min 2: ", time2 - time1)
+# FH.delete_min()
+# FH.show()
+print("After delete 2 min node: ", FH)
 
 FH1 = FibonacciHeap()
-FH1.insert_multiple([3 * x+1 for x in range(20)])
-print(FH1)
+FH1.insert_multiple([3 * x+1 for x in range(2000)])
 FH1.delete_min()
+time1 = time.time()
 FH1.union(FH)
-FH1.show()
-print(FH)
+time2 = time.time()
+print("union: ", time2 - time1)
+print("After delete 1 min node", FH1)
