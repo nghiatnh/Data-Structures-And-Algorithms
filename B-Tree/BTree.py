@@ -1,3 +1,4 @@
+from time import time
 from typing import List, Tuple
 from graphviz import Digraph, nohtml
 
@@ -36,7 +37,10 @@ class BTree:
     '''
 
     def __init__(self, order : int) -> None:
-        self.order : int = order
+        if order < 3:
+            raise Exception("The smallest order of B-Tree must be 3")
+
+        self.__order : int = order
         self.root : BTreeNode = BTreeNode()
 
     def __str__(self) -> str:
@@ -52,7 +56,7 @@ class BTree:
                 return (curNode, curNode.keys.index(key))
             
             if len(curNode.children) == 0:
-                return None
+                return (None, -1)
             
             i = 0
             while i < len(curNode.keys) and curNode.keys[i] < key:
@@ -87,7 +91,7 @@ class BTree:
         (node, index) = self.__searchToInsert(key)
 
         # If node is full -> split node, then insert
-        if len(node.keys) == self.order - 1:
+        if len(node.keys) == self.__order - 1:
             (node, index) = self.__splitNode(node, index)
             node.keys.insert(index, key)
         else:
@@ -97,7 +101,27 @@ class BTree:
         '''
         Search and delete a key in B-Tree, return the deleted key
         '''
-        pass
+
+        (node, index) = self.search(key)
+        if node is None:
+            print('Can not find key!')
+            return
+
+        if node.isLeaf():
+            node.keys = node.keys[ : index] + node.keys[index + 1 : ]
+            self.__fixUnderflow(node)
+        
+        # Search most right of left child and swap it
+        else:
+            curNode = node.children[index]
+            while not curNode.isLeaf():
+                curNode = curNode.children[-1]
+
+            node.keys[index] = curNode.keys[-1]
+
+            curNode.keys = curNode.keys[ : index] + curNode.keys[index + 1 : ]
+            
+            self.__fixUnderflow(curNode)
 
     def show(self, fileName = None):
         '''
@@ -123,12 +147,89 @@ class BTree:
 
         dot.view()
         
+    def __fixUnderflow(self, node : BTreeNode) -> None:
+
+        # Case 1
+        if len(node.keys) > round(self.__order / 2) - 2:
+            return
+
+        # Case 2
+        (parent, index) = node.parent
+        if parent is None:
+            if len(node.keys) == 0:
+                self.root = node.children[0]
+                node.children[0].parent = (None, -1)
+            return
+
+        if index < len(parent.keys) and len(parent.children[index + 1].keys) >= round(self.__order / 2):
+            rightSibling = parent.children[index + 1]
+
+            node.keys.append(parent.keys[index])
+            
+            if len(rightSibling.children) > 0:
+                node.children.append(rightSibling.children[0])
+                node.children[-1].parent = (node, len(node.children) - 1)
+                rightSibling.children = rightSibling.children[1 : ]
+                for i in range(len(rightSibling.children)):
+                    rightSibling.children[i].parent = (rightSibling, i)
+            
+            parent.keys[index] = rightSibling.keys[0]
+            rightSibling.keys = rightSibling.keys[1:]
+
+        # Case 3
+        elif index > 0 and len(parent.children[index - 1].keys) >= round(self.__order / 2):
+            leftSibling = parent.children[index - 1]
+
+            node.keys.append(parent.keys[index-1])
+            
+            if len(leftSibling.children) > 0:
+                node.children.append(leftSibling.children[-1])
+                node.children[-1].parent = (node, len(node.children) - 1)
+                leftSibling.children = leftSibling.children[ : len(node.children) - 1]
+                for i in range(len(leftSibling.children)):
+                    leftSibling.children[i].parent = (leftSibling, i)
+            
+            parent.keys[index - 1] = leftSibling.keys[-1]
+            leftSibling.keys = leftSibling.keys[:len(leftSibling.keys) - 1]
+
+        # Case 4
+        elif index < len(parent.keys) and len(parent.children[index + 1].keys) <= round(self.__order / 2) - 1:
+            parent.children[index + 1].keys.insert(0, parent.keys[index])
+            parent.children[index + 1].keys = parent.children[index].keys + parent.children[index + 1].keys
+            parent.children[index + 1].children = parent.children[index].children + parent.children[index + 1].children
+            
+            for i in range(len(parent.children[index + 1].children)):
+                parent.children[index + 1].children[i].parent = (parent.children[index + 1], i)
+
+            parent.keys = parent.keys[:index] + parent.keys[index+1:]
+            parent.children = parent.children[:index] + parent.children[index+1:]
+            for i in range(len(parent.children)):
+                parent.children[i].parent = (parent, i)
+
+        elif index > 0 and len(parent.children[index - 1].keys) <= round(self.__order / 2) - 1:
+            parent.children[index - 1].keys.append(parent.keys[index - 1])
+            parent.children[index - 1].keys += parent.children[index].keys
+            parent.children[index - 1].children += parent.children[index].children
+            
+            for i in range(len(parent.children[index - 1].children)):
+                parent.children[index - 1].children[i].parent = (parent.children[index - 1], i)
+
+            parent.keys = parent.keys[:index-1] + parent.keys[index:]
+            parent.children = parent.children[:index] + parent.children[index+1:]
+            for i in range(len(parent.children)):
+                parent.children[i].parent = (parent, i)
+        elif 0 < index < len(parent.keys) and len(parent.children[index + 1].keys) <= round(self.__order / 2) - 1 and len(parent.children[index - 1].keys) <= round(self.__order / 2) - 1:
+            pass
+
+        self.__fixUnderflow(parent)
+        
+
 
     def __splitNode(self, node : BTreeNode, index : int) -> Tuple[BTreeNode, int]:
         '''
         Split a node, then return new position that can insert
         '''
-        medianPosition = self.order // 2
+        medianPosition = self.__order // 2
         (parent, nodeIndex) = node.parent
 
         # f root node, create new root node
@@ -139,7 +240,7 @@ class BTree:
 
         # Insert median to parent keys, if parent is full -> repeat split parent node
         parent.keys.insert(nodeIndex, node.keys[medianPosition])
-        if len(parent.keys) > self.order - 1:
+        if len(parent.keys) > self.__order - 1:
             parent.keys = parent.keys[:nodeIndex] + parent.keys[nodeIndex + 1 :]
             (parent, nodeIndex) = self.__splitNode(parent, nodeIndex)
             parent.keys.insert(nodeIndex, node.keys[medianPosition])
@@ -170,11 +271,12 @@ class BTree:
             return (parent.children[nodeIndex + 1], index - 1 - medianPosition)
         
 
-                       
+N = 20
 btree : BTree = BTree(3)
-for i in range(20):
+for i in range(1, N + 1):
     btree.insert(i)
-btree.insert(0.5)
+    btree.insert(i)
 
-print(btree)
+btree.delete(17)
+
 btree.show()
