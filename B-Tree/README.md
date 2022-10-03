@@ -1,6 +1,6 @@
 # B-Tree Data Structure
 
-- Implement Fibonacci Heap Data Structure:
+- Implement B-Tree Data Structure:
 
   - Search
   - Insert
@@ -8,8 +8,8 @@
   - Show
 
 - Notes:
-  - Value insert must be not in heap
-  - Value delete can be in heap or not
+  - Value insert must be not in tree
+  - Value delete can be in tree or not
 
 # B-Tree:
 
