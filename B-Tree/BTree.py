@@ -275,7 +275,6 @@ N = 20
 btree : BTree = BTree(3)
 for i in range(1, N + 1):
     btree.insert(i)
-    btree.insert(i)
 
 btree.delete(17)
 
