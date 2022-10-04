@@ -67,21 +67,6 @@ class BTree:
     def isEmpty(self):
         return len(self.root.keys) == 0
 
-    def __searchToInsert(self, key : int) -> Tuple[BTreeNode, int]:
-        '''
-        Search appropriate position to insert
-        '''
-        curNode = self.root
-        while True:
-            i = 0
-            while i < len(curNode.keys) and curNode.keys[i] < key:
-                i += 1
-
-            if len(curNode.children) == 0:
-                return (curNode, i)
-
-            curNode = curNode.children[i]
-
     def insert(self, key : int) -> None:
         '''
         Insert new key to B-Tree
@@ -89,6 +74,10 @@ class BTree:
         
         # Search position to insert
         (node, index) = self.__searchToInsert(key)
+
+        if node is None:
+            print("Key has been in tree!")
+            return
 
         # If node is full -> split node, then insert
         if len(node.keys) == self.__order - 1:
@@ -146,14 +135,32 @@ class BTree:
             waitNodes += curNode.children
 
         dot.view()
+
+    def __searchToInsert(self, key : int) -> Tuple[BTreeNode, int]:
+        '''
+        Search appropriate position to insert
+        '''
+        curNode = self.root
+        while True:
+            if key in curNode.keys:
+                return (None, -1)
+
+            i = 0
+            while i < len(curNode.keys) and curNode.keys[i] < key:
+                i += 1
+
+            if len(curNode.children) == 0:
+                return (curNode, i)
+
+            curNode = curNode.children[i]
         
     def __fixUnderflow(self, node : BTreeNode) -> None:
 
-        # Case 1
+        # Case 1 : node is not underflow
         if len(node.keys) > round(self.__order / 2) - 2:
             return
 
-        # Case 2
+
         (parent, index) = node.parent
         if parent is None:
             if len(node.keys) == 0:
@@ -161,6 +168,7 @@ class BTree:
                 node.children[0].parent = (None, -1)
             return
 
+        # Case 2: Right sibling has at least m/2 keys -> Rotate left
         if index < len(parent.keys) and len(parent.children[index + 1].keys) >= round(self.__order / 2):
             rightSibling = parent.children[index + 1]
 
@@ -176,7 +184,7 @@ class BTree:
             parent.keys[index] = rightSibling.keys[0]
             rightSibling.keys = rightSibling.keys[1:]
 
-        # Case 3
+        # Case 3: Left sibling has at least m/2 keys -> Rotate right
         elif index > 0 and len(parent.children[index - 1].keys) >= round(self.__order / 2):
             leftSibling = parent.children[index - 1]
 
@@ -192,7 +200,7 @@ class BTree:
             parent.keys[index - 1] = leftSibling.keys[-1]
             leftSibling.keys = leftSibling.keys[:len(leftSibling.keys) - 1]
 
-        # Case 4
+        # Case 4: Both left and right sibling has at most m/2 - 1 keys
         elif index < len(parent.keys) and len(parent.children[index + 1].keys) <= round(self.__order / 2) - 1:
             parent.children[index + 1].keys.insert(0, parent.keys[index])
             parent.children[index + 1].keys = parent.children[index].keys + parent.children[index + 1].keys
@@ -218,11 +226,9 @@ class BTree:
             parent.children = parent.children[:index] + parent.children[index+1:]
             for i in range(len(parent.children)):
                 parent.children[i].parent = (parent, i)
-        elif 0 < index < len(parent.keys) and len(parent.children[index + 1].keys) <= round(self.__order / 2) - 1 and len(parent.children[index - 1].keys) <= round(self.__order / 2) - 1:
-            pass
 
+        # propagate up
         self.__fixUnderflow(parent)
-        
 
 
     def __splitNode(self, node : BTreeNode, index : int) -> Tuple[BTreeNode, int]:
@@ -271,11 +277,13 @@ class BTree:
             return (parent.children[nodeIndex + 1], index - 1 - medianPosition)
         
 
-N = 20
-btree : BTree = BTree(3)
+N = 40
+btree : BTree = BTree(6)
 for i in range(1, N + 1):
     btree.insert(i)
 
 btree.delete(17)
+btree.delete(18)
+# btree.delete(19)
 
 btree.show()
