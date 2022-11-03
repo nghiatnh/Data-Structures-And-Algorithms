@@ -1,6 +1,7 @@
 # Data-Structures-And-Algorithms
 
 Implement data structures and algorithms in CSD301:
-+ [Black Red Tree](https://github.com/nghiatnh/Data-Structures-And-Algorithms/tree/main/BR-Tree)
-+ [Fibonacci Heap](https://github.com/nghiatnh/Data-Structures-And-Algorithms/tree/main/Fibonacci-Heap)
-+ [B-Tree](https://github.com/nghiatnh/Data-Structures-And-Algorithms/tree/main/B-Tree)
++ [Black Red Tree](./BR-Tree/)
++ [Fibonacci Heap](./Fibonacci-Heap/)
++ [B-Tree](./B-Tree/)
++ [Dynamic-Programing](./Dynamic-Programing/)
