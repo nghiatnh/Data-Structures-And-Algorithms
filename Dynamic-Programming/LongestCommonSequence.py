@@ -1,3 +1,5 @@
+from typing import *
+
 class LongestCommonSequence:
     '''
     Longest Common Sequence
@@ -9,7 +11,7 @@ class LongestCommonSequence:
     def __init__(self) -> None:
         self.optimized_result = []
 
-    def solve(self, A : str, B : str) -> str:
+    def solve(self, A : str, B : str) -> Tuple[int, str]:
         lenA = len(A)
         lenB = len(B)
         self.optimized_result = [

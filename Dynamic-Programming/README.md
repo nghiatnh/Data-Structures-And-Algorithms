@@ -3,6 +3,5 @@
 - Define: Is a strategy to solve some problem
 - Implement Fibonacci Heap Data Structure:
   + [Knapsack Problem](./Knapsack-Problem.py)
-  + Cutting Rob
-  + Longest Common Subsets (LCS)
-  + Matrix Chain Multiplication
+  + [Longest Common Sequence (LCS)](./LongestCommonSequence.py)
+  + [Matrix Chain Multiplication](./MatrixChainMultiplication.py)
