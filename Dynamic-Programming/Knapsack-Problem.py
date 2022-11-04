@@ -11,37 +11,38 @@ class Knapsack:
     Find maximum cost and items for 0/1 Single Knapsack Problem
     '''
     def __init__(self) -> None:
+        self.optimized_cost = []
         self.optimized_result = []
         
     def solve(self, C : int, W : List[int], P : List[int]) -> Tuple[int, List[int]]:
         n = len(W)
 
-        self.optimized_result = [[0 for x in range(C + 1)] for x in range(n + 1)]
+        self.optimized_cost = [[0 for x in range(C + 1)] for x in range(n + 1)]
+        self.optimized_result = [0 for x in range(n)]
  
-        # Build table self.optimized_result[][] in bottom up manner
+        # Build table self.optimized_cost[][] in bottom up manner
         for i in range(n + 1):
             for w in range(C + 1):
                 if i == 0 or w == 0:
-                    self.optimized_result[i][w] = 0
+                    self.optimized_cost[i][w] = 0
                 elif W[i-1] <= w:
-                    self.optimized_result[i][w] = max(P[i-1]
-                            + self.optimized_result[i-1][w-W[i-1]], 
-                                self.optimized_result[i-1][w])
+                    self.optimized_cost[i][w] = max(P[i-1]
+                            + self.optimized_cost[i-1][w-W[i-1]], 
+                                self.optimized_cost[i-1][w])
                 else:
-                    self.optimized_result[i][w] = self.optimized_result[i-1][w]
+                    self.optimized_cost[i][w] = self.optimized_cost[i-1][w]
 
         # Find items to give optimal result
         i = n
         w = C
-        result = [0 for x in range(n)]
         while i > 0:
-            if self.optimized_result[i][w] != self.optimized_result[i - 1][w]:
-                result[i - 1] = 1
+            if self.optimized_cost[i][w] != self.optimized_cost[i - 1][w]:
+                self.optimized_result[i - 1] = 1
                 w -= W[i - 1]
                 i -= 1
             else:
                 i -= 1
-        return (self.optimized_result[n][C], result)
+        return (self.optimized_cost[n][C], self.optimized_result)
 
 # Testing
 knapsack = Knapsack()
