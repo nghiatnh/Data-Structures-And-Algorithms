@@ -5,4 +5,5 @@ Implement data structures and algorithms in CSD301:
 + [Fibonacci Heap](./Fibonacci-Heap/)
 + [B-Tree](./B-Tree/)
 + [Disjoint Set](./DisjointSet/)
-+ [Dynamic-Programming](./Dynamic-Programming/)
++ [Dynamic Programming](./Dynamic-Programming/)
++ [Greedy](./Greedy/)
